@@ -1,0 +1,7 @@
+# pip install -r require.txt
+
+pandas
+nltk
+matplotlib
+seaborn
+wordcloud
