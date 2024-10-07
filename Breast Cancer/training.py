@@ -5,8 +5,8 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adagrad
 from keras.utils import to_categorical
 from sklearn.metrics import classification_report, confusion_matrix
-from cancernet.cancernet import CancerNet
-from cancernet import config
+from cancernet import CancerNet
+import config
 from imutils import paths
 import matplotlib.pyplot as plt
 import numpy as np
