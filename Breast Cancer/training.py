@@ -3,7 +3,6 @@ matplotlib.use('Agg')
 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adagrad
-from keras.utils import to_categorical
 from sklearn.metrics import classification_report, confusion_matrix
 from cancernet import CancerNet
 import config
@@ -12,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-NUM_EPOCHS = 40
+NUM_EPOCHS = 30
 INIT_LR = 1e-2
 BS = 32
 
@@ -30,10 +29,8 @@ train_labels = [int(p.split(os.path.sep)[-2]) for p in train_paths]
 if len(train_labels) == 0:
     raise ValueError('No training labels found. Please check your dataset.')
 
-train_labels = to_categorical(train_labels)
-
-class_totals = train_labels.sum(axis=0)
-class_weight = class_totals.max() / class_totals
+class_totals = np.bincount(train_labels)
+class_weight = {i: class_totals.max() / class_totals[i] for i in range(len(class_totals))}
 
 # Data augmentation
 train_aug = ImageDataGenerator(
@@ -48,21 +45,22 @@ train_aug = ImageDataGenerator(
     fill_mode='nearest'
 )
 
-val_aug = ImageDataGenerator(rescale=1 / 255.0)
+val_aug = ImageDataGenerator(rescale = 1 / 255.0)
 
 # Create data generators
 train_gen = train_aug.flow_from_directory(
     config.TRAIN_PATH,
-    class_mode='categorical',
+    class_mode='binary',
     target_size=(48, 48),
     color_mode='rgb',
     shuffle=True,
     batch_size=BS
 )
 
+# Adjust the validation generator similarly
 val_gen = val_aug.flow_from_directory(
     config.VAL_PATH,
-    class_mode='categorical',
+    class_mode='binary',
     target_size=(48, 48),
     color_mode='rgb',
     shuffle=False,
@@ -71,7 +69,7 @@ val_gen = val_aug.flow_from_directory(
 
 test_gen = val_aug.flow_from_directory(
     config.TEST_PATH,
-    class_mode='categorical',
+    class_mode='binary',
     target_size=(48, 48),
     color_mode='rgb',
     shuffle=False,
@@ -79,7 +77,7 @@ test_gen = val_aug.flow_from_directory(
 )
 
 # Build model
-model = CancerNet.build(width=48, height=48, depth=3, classes=2)
+model = CancerNet.build(width=48, height=48, depth=3, classes=1)
 opt = Adagrad(learning_rate=INIT_LR)
 model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 
@@ -124,3 +122,6 @@ plt.xlabel('Epoch #')
 plt.ylabel('Loss/Accuracy')
 plt.legend()
 plt.savefig('plot.png')
+
+# Save model
+model.save('CancerNet_bi.h5')
