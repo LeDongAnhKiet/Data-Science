@@ -1,1 +1,1 @@
-pip install tensorflow numpy tqdm keras
+pip install --upgrade tensorflow numpy tqdm keras
